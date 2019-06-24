@@ -1,0 +1,25 @@
+{
+  "name": "hqcl",
+  "version": "1.0.0",
+  "description": "HTML Query",
+  "main": "index.js",
+  "bin": {
+    "hq": "index.js"
+  },
+  "keywords": [
+    "html",
+    "query"
+  ],
+  "author": {
+    "name": "khanhas",
+    "url": "https://github.com/khanhas"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "jsdom": "^15.1.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/khanhas/hq"
+  }
+}
