@@ -2,12 +2,12 @@
 const { JSDOM } = require("jsdom");
 const { readFileSync } = require("fs");
 
-// Pretent to use stdin, then readFileSync will throw error if there is no
+// Pretend to use stdin, then readFileSync will throw error if there is no
 // incoming stdin.
 void (process.stdin);
 let data;
 try {
-    data = readFileSync(0, "utf-8")
+    data = readFileSync(0, "utf-8");
 } catch { }
 
 async function work() {
@@ -31,15 +31,10 @@ async function work() {
     const query = args.shift();
     let els = find(html, query);
     args.forEach(arg => {
-        let m = arg.match(/\.\[(\d*):?(\d*)\]/);
-        if (m)
-            els = els.slice(...m
-                .slice(1, 3)
-                .map(p => p ? parseInt(p) : undefined));
-        else if (arg.startsWith("."))
-            els = els.map(el => member(el, arg));
-        else
-            els = els.map(el => method(el, arg));
+        const [, start, colon, end] = arg.match(/\.\[(\d*)(:?)(\d*)\]/) || [];
+        els = start || end ?
+            (colon ? slice : at)(els, start, end) :
+            els.map(arg.startsWith(".") ? member : method, arg);
     });
 
     els.forEach(out);
@@ -48,21 +43,25 @@ work().catch(console.error);
 
 const trim = s => s.trim();
 const find = (html,  s) => [...html.window.document.querySelectorAll(s)];
-const member = (n, m) => {
-    const memName = m.slice(1);
-    if (!n[memName]) throw `${memName} is not a member of "${n}"`;
-    return n[memName];
+const member = function(el) {
+    const name = this.slice(1);
+    if (!el[name]) throw `${name} is not a member of "${el}"`;
+    return el[name];
 };
-const method = (n, m) => {
-    const matches = m.match(/(.+?)\((.*?)\)/);
-    if (matches) {
-        if (typeof n[matches[1]] != "function")
-            throw `${matches[1]} is not a method of "${n}"`;
-        return n[matches[1]](...matches[2].split(","));
-    } else {
-        if (typeof n[m] != "function")
-            throw `${m} is not a method of "${n}"`;
-        return n[m]();
+const method = function(el) {
+    const [, func, paras] = this.match(/(.+?)\((.*?)\)/) || [];
+    if (paras) {
+        if (typeof el[func] != "function")
+            throw `${func} is not a method of "${el}"`;
+        return el[func](...paras.split(","));
     }
+
+    if (typeof el[this] != "function")
+        throw `${this} is not a method of "${el}"`;
+    return el[this]();
 }
+const slice = (els, start, end) => els
+    .slice(start || undefined, end || undefined);
+const at = (els, index) => [els[index]];
+
 const out = r => console.log(typeof r == "string" ? unescape(r) : r);
