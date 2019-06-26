@@ -45,19 +45,21 @@ const trim = s => s.trim();
 const find = (html,  s) => [...html.window.document.querySelectorAll(s)];
 const member = function(el) {
     const name = this.slice(1);
-    if (!el[name]) throw `${name} is not a member of "${el}"`;
+    if (!isValid(el[name])) {
+        throw `${name} is not a member of "${el}". List of available members:\n${getAllMember(el)}`
+    };
     return el[name];
 };
 const method = function(el) {
     const [, func, paras] = this.match(/(.+?)\((.*?)\)/) || [];
     if (paras) {
         if (typeof el[func] != "function")
-            throw `${func} is not a method of "${el}"`;
+            throw `${func} is not a method of "${el}". List of available methods:\n${getAllMethod(el)}`;
         return el[func](...paras.split(","));
     }
 
     if (typeof el[this] != "function")
-        throw `${this} is not a method of "${el}"`;
+        throw `${this} is not a method of "${el}". List of available methods:\n${getAllMethod(el)}`;
     return el[this]();
 }
 const slice = (els, start, end) => els
@@ -65,3 +67,17 @@ const slice = (els, start, end) => els
 const at = (els, index) => [els[index]];
 
 const out = r => console.log(typeof r == "string" ? unescape(r) : r);
+
+const isValid = e => e !== undefined && e !== null;
+
+const getAllValidKey = e => {
+    const out = [];
+    for (const k in e) isValid(e[k]) && out.push(k);
+    return out;
+};
+const getAllMember = e => getAllValidKey(e)
+    .filter(m => typeof e[m] !== "function")
+    .join(", ");
+const getAllMethod = e => getAllValidKey(e)
+    .filter(m => typeof e[m] === "function")
+    .join(", ");
